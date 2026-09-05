@@ -28,6 +28,9 @@ group 'com.opendxl'
 // JDK pin of this branch (see "Branches" in README.md): the toolchain compiles, tests and generates the javadoc
 // with exactly this JDK, whatever JDK runs Gradle itself. A missing JDK is downloaded through the foojay
 // resolver declared in settings.gradle. Keep this the only place where the branch's JDK is set.
+// jdk8 line: Java 8 is the build JVM and the bytecode target. Kafka 3.9.x is the last line that supports Java 8
+// (Kafka 4 requires 11), avro 1.11.x the last for Java 8 (1.12 requires 11). Gradle 8.14 itself still runs on a
+// Java 8 JVM, but the OWASP dependency-check plugin needs 11+, which is why it stays gated behind -PnvdApiKey.
 def javaVersion = 8
 java {
     toolchain {
