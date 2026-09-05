@@ -25,10 +25,26 @@ plugins {
 
 group 'com.opendxl'
 
-// The client is consumed from Java 8 applications; keep the bytecode and the language level at Java 8
+// JDK pin of this branch (see "Branches" in README.md): the toolchain compiles, tests and generates the javadoc
+// with exactly this JDK, whatever JDK runs Gradle itself. A missing JDK is downloaded through the foojay
+// resolver declared in settings.gradle. Keep this the only place where the branch's JDK is set.
+def javaVersion = 8
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(javaVersion)
+    }
+}
+if (javaVersion > 8) {
+    // javac --release: bytecode and the visible JDK API are limited to this version
+    tasks.withType(JavaCompile).configureEach {
+        options.release = javaVersion
+    }
+} else {
+    // javac 8 has no --release option; source/target keep the bytecode and the language level at Java 8
+    java {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
 }
 
 apply plugin: 'base'
@@ -266,6 +282,10 @@ test {
 
 // Make check style run before creating a jar
 jar.dependsOn(checkstyleMain)
+
+// The samples ship as sources in the distribution; compile them as part of the build so API removals in
+// dependency updates are caught by CI
+check.dependsOn(sampleClasses)
 
 // Force distZip to be dependent on javadocJar and sourceJar
 distZip.dependsOn javadocJar

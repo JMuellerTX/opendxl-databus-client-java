@@ -1,2 +1,9 @@
+plugins {
+    // Downloads the JDK requested by the toolchain in build.gradle when it is not installed (CI and local builds).
+    // 0.10.0 is the last release that runs on a Java 8 Gradle JVM (1.0.0 requires Java 17); it is the same on all
+    // jdk* branches so that build changes cherry-pick cleanly.
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.10.0'
+}
+
 rootProject.name = 'dxldatabusclient'
 
