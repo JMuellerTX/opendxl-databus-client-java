@@ -1,11 +1,16 @@
 name: Build
 
+# master is the JDK 21 line (see "Branches" in README.md); the jdk8/jdk11/jdk17 branches carry the same workflow
+# reduced to their own JDK. Gradle runs on the matrix JDK and the toolchain in build.gradle uses the same version,
+# so nothing is downloaded by the foojay resolver in CI.
 on:
   workflow_dispatch:
   push:
     branches:
       - master
   pull_request:
+    branches:
+      - master
   schedule:
     - cron:  '0 0 * * *'
 
@@ -15,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java-version: [ 8, 11, 17, 21 ]
+        java-version: [ 21 ]
       fail-fast: false
 
     steps:

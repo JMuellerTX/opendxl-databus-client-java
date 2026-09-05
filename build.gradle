@@ -28,7 +28,8 @@ group 'com.opendxl'
 // JDK pin of this branch (see "Branches" in README.md): the toolchain compiles, tests and generates the javadoc
 // with exactly this JDK, whatever JDK runs Gradle itself. A missing JDK is downloaded through the foojay
 // resolver declared in settings.gradle. Keep this the only place where the branch's JDK is set.
-def javaVersion = 8
+// master is the JDK 21 line: Kafka 3.9.x and the embedded test cluster run on 21 without extra JVM flags
+def javaVersion = 21
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(javaVersion)
