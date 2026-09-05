@@ -4,12 +4,15 @@
 
 package com.opendxl.databus.util;
 
-import kafka.admin.TopicCommand;
-import kafka.zk.KafkaZkClient;
-import org.apache.kafka.common.utils.SystemTime;
-import scala.runtime.AbstractFunction0;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.producer.ProducerConfig;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class Topic {
     public static String getRandomTopicName() {
@@ -49,40 +52,16 @@ public class Topic {
         }
 
         public String go() {
-            String[] arguments = {"--create",
-                    "--zookeeper",
-                    zkHost.concat(":").concat(zkPort),
-                    "--replication-factor",
-                    String.valueOf(replicationFactor),
-                    "--partitions",
-                    String.valueOf(partitions),
-                    "--topic",
-                    topicName};
-
-            TopicCommand.TopicCommandOptions opts = new TopicCommand.TopicCommandOptions(arguments);
-            try (KafkaZkClient zkUtils = getZkClient(opts)) {
-                new TopicCommand.ZookeeperTopicService(zkUtils).createTopic(opts);
+            // Topics are created through the AdminClient since Kafka 3.x removed the ZooKeeper based TopicCommand
+            final Map<String, Object> props = new HashMap<>();
+            props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, Constants.KAFKA_HOST + ":" + Constants.KAFKA_PORT);
+            final NewTopic topic = new NewTopic(topicName, partitions, (short) replicationFactor);
+            try (AdminClient adminClient = AdminClient.create(props)) {
+                adminClient.createTopics(Collections.singleton(topic)).all().get(30000, TimeUnit.MILLISECONDS);
+            } catch (Exception e) {
+                throw new RuntimeException("Error creating a new Kafka topic " + topicName, e);
             }
             return topicName;
-
-
-        }
-
-        private KafkaZkClient getZkClient(TopicCommand.TopicCommandOptions opts) {
-            final String connectString = opts.zkConnect().getOrElse(new AbstractFunction0<String>() {
-                @Override
-                public String apply() {
-                    return "";
-                } });
-
-            return KafkaZkClient.apply(connectString,
-                    false,
-                    30000,
-                    30000,
-                    1000,
-                    new SystemTime(),
-                    "kafka.server",
-                    "SessionExpireListener", null);
         }
     }
 }
