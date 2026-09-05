@@ -28,7 +28,9 @@ group 'com.opendxl'
 // JDK pin of this branch (see "Branches" in README.md): the toolchain compiles, tests and generates the javadoc
 // with exactly this JDK, whatever JDK runs Gradle itself. A missing JDK is downloaded through the foojay
 // resolver declared in settings.gradle. Keep this the only place where the branch's JDK is set.
-def javaVersion = 8
+// jdk11 line: javac --release 11; nothing JDK specific is needed (Kafka 3.9.x, ZooKeeper 3.9 and jacoco 0.8.15
+// run on 11 without extra JVM flags). This is the oldest line that could move to Kafka 4.x.
+def javaVersion = 11
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(javaVersion)

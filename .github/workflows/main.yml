@@ -1,11 +1,16 @@
 name: Build
 
+# jdk11 line (see "Branches" in README.md): the same workflow as on master, reduced to JDK 11 and to this branch.
+# Gradle runs on the matrix JDK and the toolchain in build.gradle uses the same version, so nothing is downloaded
+# by the foojay resolver in CI. The schedule is only honoured by GitHub on the default branch (master).
 on:
   workflow_dispatch:
   push:
     branches:
-      - master
+      - jdk11
   pull_request:
+    branches:
+      - jdk11
   schedule:
     - cron:  '0 0 * * *'
 
@@ -15,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java-version: [ 8, 11, 17, 21 ]
+        java-version: [ 11 ]
       fail-fast: false
 
     steps:
