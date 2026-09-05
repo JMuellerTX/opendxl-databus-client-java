@@ -44,6 +44,39 @@ or Gradle:
 compile 'com.opendxl:dxldatabusclient:2.4.12'
 ```
 
+## Branches
+
+Each branch builds and tests the library with one JDK; the library API and the wire format are the same on all
+branches. `build.gradle` pins the JDK with a Gradle toolchain (`def javaVersion = N`), so `./gradlew build` uses that
+JDK whatever JDK runs Gradle, and downloads it when it is not installed (`settings.gradle`, foojay resolver).
+
+| Branch   | JDK (toolchain, bytecode) | CI                                        |
+|----------|---------------------------|-------------------------------------------|
+| `master` | 21                        | `.github/workflows/main.yml`, JDK 21 only |
+| `jdk17`  | 17                        | same workflow, JDK 17 only                |
+| `jdk11`  | 11                        | same workflow, JDK 11 only                |
+| `jdk8`   | 8                         | same workflow, JDK 8 only                 |
+
+Fixes land on `master` first and are then cherry-picked into `jdk17` -> `jdk11` -> `jdk8` where they apply
+(the branches differ only in `build.gradle`, the workflow triggers and JDK specific build settings):
+
+```sh
+git checkout master && git pull
+# fix, commit, push; wait until the master run is green:
+gh run list --branch master
+
+git checkout jdk17 && git pull && git cherry-pick -x <sha> && git push origin jdk17
+git checkout jdk11 && git pull && git cherry-pick -x <sha> && git push origin jdk11
+git checkout jdk8  && git pull && git cherry-pick -x <sha> && git push origin jdk8
+
+# run and check the branch CI (or start it by hand with "gh workflow run main.yml --ref <branch>")
+gh run list --branch jdk17
+gh run view <run-id> --log-failed
+```
+
+Resolve cherry-pick conflicts in `build.gradle` in favour of the branch's `javaVersion` line and JDK specific
+settings. Do not merge the branches into each other.
+
 ## Bugs and Feedback
 
 For bugs, questions and discussions please use the
