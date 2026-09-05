@@ -253,8 +253,10 @@ public class BasicStreamingExample {
         return () -> {
 
             while(true) {
+                // KafkaStreams.store(String, QueryableStoreType) was removed in Kafka 3.0
                 ReadOnlyKeyValueStore<String, DatabusMessage> keyValueStore =
-                        this.stream.store("keyvaluestore", QueryableStoreTypes.keyValueStore());
+                        this.stream.store(StoreQueryParameters.fromNameAndType("keyvaluestore",
+                                QueryableStoreTypes.keyValueStore()));
 
                 KeyValueIterator<String, DatabusMessage> iter = keyValueStore.all();
                 while (iter.hasNext()) {
