@@ -12,7 +12,6 @@ import com.opendxl.databus.util.Constants;
 import com.opendxl.databus.util.ProducerHelper;
 import com.opendxl.databus.util.Topic;
 import org.junit.*;
-import org.junit.contrib.java.lang.system.ExpectedSystemExit;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +19,7 @@ import java.util.Map;
 public class CommandLineInterfaceTest {
 
     @Rule
-    public final ExpectedSystemExit exit = ExpectedSystemExit.none();
+    public final ExpectedExit exit = ExpectedExit.none();
 
     @BeforeClass
     public static void startCluster() throws IOException {

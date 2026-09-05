@@ -104,9 +104,6 @@ dependencies {
     testImplementation 'io.dropwizard.metrics:metrics-core:4.2.40'
     testImplementation 'commons-io:commons-io:2.22.0'
     testImplementation 'junit:junit:4.13.2'
-    testImplementation('com.github.stefanbirkner:system-rules:1.19.0') {
-        exclude group: 'junit', module: 'junit-dep'
-    }
     testImplementation 'com.e-movimento.tinytools:privilegedaccessor:1.2.2'
 
     kafkaInMemory ('org.apache.kafka:kafka_2.12:3.9.2') {

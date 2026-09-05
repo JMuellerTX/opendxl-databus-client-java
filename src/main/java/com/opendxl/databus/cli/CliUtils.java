@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.util.Properties;
+import java.util.function.IntConsumer;
 
 /**
  * Facilities for command line options
@@ -30,8 +31,27 @@ public class CliUtils {
      */
     private static final int INVALID_PARTITION = -1;
 
+    /**
+     * Action executed to finish the command line interface with an exit status. It terminates the JVM;
+     * tests replace it to observe the exit status without stopping the test JVM.
+     */
+    private static volatile IntConsumer exitHandler = Runtime.getRuntime()::exit;
+
     private CliUtils() {
 
+    }
+
+    /**
+     * Replaces the action executed when the command line interface finishes (intended for tests).
+     *
+     * @param handler receives the exit status; {@code null} restores the default {@link Runtime#exit(int)}
+     */
+    static void setExitHandler(final IntConsumer handler) {
+        if (handler == null) {
+            exitHandler = Runtime.getRuntime()::exit;
+        } else {
+            exitHandler = handler;
+        }
     }
 
     /**
@@ -41,7 +61,7 @@ public class CliUtils {
      */
     public static void printUsageAndFinish(final String executionResult) {
         System.out.println(executionResult);
-        Runtime.getRuntime().exit(0);
+        exitHandler.accept(0);
     }
 
     /**
@@ -73,7 +93,7 @@ public class CliUtils {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Runtime.getRuntime().exit(1);
+        exitHandler.accept(1);
     }
 
     /**
