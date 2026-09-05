@@ -1,54 +1,58 @@
-buildscript {
-    repositories {
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'org.owasp:dependency-check-gradle:6.1.5'
-    }
-}
-
 plugins {
     id 'checkstyle'
     id 'distribution'
     id 'java-library'
     id 'maven-publish'
     id 'signing'
-    id "com.github.johnrengelman.shadow" version "4.0.3"
-    id "kr.motd.sphinx" version "2.3.1"
+    id "com.gradleup.shadow" version "8.3.11"
+    id "kr.motd.sphinx" version "2.10.1"
     id "jacoco"
-    id "org.owasp.dependencycheck" version "6.1.5"
+    id "org.owasp.dependencycheck" version "12.2.2" apply false
 }
 
 group 'com.opendxl'
 
-sourceCompatibility = 1.8
+// The client is consumed from Java 8 applications; keep the bytecode and the language level at Java 8
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
 
 apply plugin: 'base'
 apply plugin: 'java'
 apply plugin: 'groovy'
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
-apply plugin: "com.github.johnrengelman.shadow"
-apply plugin: 'org.owasp.dependencycheck'
 
-dependencyCheck {
-    suppressionFile = file("${projectDir}/config/dependency-check/owasp-suppression.xml")
+// OWASP dependency-check needs Java 11+ and an NVD API key (https://nvd.nist.gov/developers/request-an-api-key).
+// It is only applied when the key is provided: ./gradlew dependencyCheckAnalyze -PnvdApiKey=<key>
+if (project.hasProperty('nvdApiKey')) {
+    apply plugin: 'org.owasp.dependencycheck'
+    dependencyCheck {
+        nvd {
+            apiKey = project.property('nvdApiKey')
+        }
+        suppressionFile = file("${projectDir}/config/dependency-check/owasp-suppression.xml")
+    }
+    check.dependsOn dependencyCheckAnalyze
 }
 
 jacoco {
-    toolVersion = "0.8.6"
-    reportsDir = file("$buildDir/reports/coverage")
+    toolVersion = "0.8.15"
+    reportsDirectory = layout.buildDirectory.dir("reports/coverage")
 }
 
 jacocoTestReport {
     reports {
-        xml.enabled false
-        csv.enabled false
-        html.destination file("$buildDir/reports/coverage")
+        xml.required = false
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir("reports/coverage")
     }
+}
+
+// The main resources overlap with the Java sources; keep the pre-Gradle 7 behaviour for the copied duplicates
+tasks.withType(AbstractCopyTask).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
 configurations {
@@ -61,6 +65,8 @@ configurations.all {
         force 'com.fasterxml.jackson.core:jackson-annotations:2.17.3'
         force 'com.fasterxml.jackson.core:jackson-core:2.17.3'
         force 'com.fasterxml.jackson.core:jackson-databind:2.17.3'
+        force 'org.apache.commons:commons-compress:1.27.1'
+        force 'io.netty:netty-all:4.1.115.Final'
     }
 }
 
@@ -88,9 +94,7 @@ dependencies {
     }
     testImplementation 'org.scala-lang:scala-reflect:2.12.11'
     testImplementation 'org.apache.zookeeper:zookeeper:3.8.4'
-    testImplementation('io.netty:netty-all:4.1.115.Final') {
-        force = true
-    }
+    testImplementation 'io.netty:netty-all:4.1.115.Final'
     testImplementation 'commons-io:commons-io:2.7'
     testImplementation 'junit:junit:4.12'
     testImplementation('com.github.stefanbirkner:system-rules:1.19.0') {
@@ -122,20 +126,12 @@ dependencies {
     // http://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2019-16942
     // http://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2019-16943
     // CVE-2020-25649
-    compile ('com.fasterxml.jackson.core:jackson-databind:2.17.3') {
-        force = true
-    }
-    kafkaInMemory ('com.fasterxml.jackson.core:jackson-databind:2.17.3') {
-        force = true
-    }
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.3'
+    kafkaInMemory 'com.fasterxml.jackson.core:jackson-databind:2.17.3'
 
     // http://web.nvd.nist.gov/view/vuln/detail?vulnId=CVE-2019-12402
-    kafkaInMemory ('org.apache.commons:commons-compress:1.27.1') {
-        force = true
-    }
-    compile ('org.apache.commons:commons-compress:1.27.1') {
-        force = true
-    }
+    kafkaInMemory 'org.apache.commons:commons-compress:1.27.1'
+    implementation 'org.apache.commons:commons-compress:1.27.1'
 }
 
 repositories {
@@ -154,13 +150,13 @@ jar {
 
 // Task for creating a jar with the source files
 task sourceJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.allSource
 }
 
 // Task for creating a jar with JavaDoc
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc.destinationDir
 }
 
@@ -178,7 +174,7 @@ artifacts {
 // Set up the distribution zip
 distributions {
     main {
-        baseName = 'dxldatabusclient-java-sdk'
+        distributionBaseName = 'dxldatabusclient-java-sdk'
         contents {
             from(jar) {
                 into('lib')
@@ -347,7 +343,16 @@ task replaceVersionInREADME() {
 }
 
 signing {sign publishing.publications.maven}
-check.dependsOn dependencyCheckAnalyze
+
+// Declare the implicit task dependencies of the distribution (required since Gradle 7.1)
+tasks.named('distTar') {
+    it.mustRunAfter(tasks.named('javadoc'))
+}
+
+tasks.named('javadocJar') {
+    it.mustRunAfter(tasks.named('sphinx'))
+}
+
 distZip.dependsOn javadocJar
 distZip.dependsOn sourceJar
 sphinx.dependsOn(versionFile)
