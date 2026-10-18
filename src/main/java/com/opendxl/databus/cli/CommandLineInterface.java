@@ -166,7 +166,7 @@ public class CommandLineInterface {
         optionSpecMap.put(Options.CONFIG, configOpt);
         optionSpecMap.put(Options.TENANT_GROUP, tenantGroupOpt);
         optionSpecMap.put(Options.SHARDING_KEY, shardingKeyOpt);
-        optionSpecMap.put(Options.HEADERS, shardingKeyOpt);
+        optionSpecMap.put(Options.HEADERS, headersOpt);
         optionSpecMap.put(Options.FROM_TOPIC, fromTopicOpt);
         optionSpecMap.put(Options.CONSUME_TIMEOUT, consumeTimeoutOpt);
         optionSpecMap.put(Options.CONSUME_RECORDS, consumeRecordsOpt);

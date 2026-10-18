@@ -60,7 +60,7 @@ public final class SSLSaslPlainCredential implements Credential {
                                   final String userPassword) {
 
         final String saslJaasConfig = "org.apache.kafka.common.security.plain.PlainLoginModule required "
-                + "username=\"" + userName + "\""
+                + "username=\"" + userName + "\" "
                 + "password=\"" + userPassword + "\";";
 
         config = new HashMap<>();

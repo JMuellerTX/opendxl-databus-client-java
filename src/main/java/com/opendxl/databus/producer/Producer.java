@@ -337,6 +337,9 @@ public abstract class Producer<P> {
     public void flush() {
         try {
             producer.flush();
+            if (jsonProducer != null) {
+                jsonProducer.flush();
+            }
         } catch (Exception e) {
             throw new DatabusClientRuntimeException("flush cannot be performed :" + e.getMessage(), e, Producer.class);
 
@@ -406,7 +409,13 @@ public abstract class Producer<P> {
      */
     public void close() {
         try {
-            producer.close();
+            try {
+                producer.close();
+            } finally {
+                if (jsonProducer != null) {
+                    jsonProducer.close();
+                }
+            }
         } catch (Exception e) {
             throw new DatabusClientRuntimeException("close cannot be performed :" + e.getMessage(), e, Producer.class);
         }
@@ -443,7 +452,14 @@ public abstract class Producer<P> {
      */
     public void close(final long timeout, final TimeUnit timeUnit) {
         try {
-            producer.close(Duration.of(timeout, toChronoUnit(timeUnit)));
+            final Duration duration = Duration.of(timeout, toChronoUnit(timeUnit));
+            try {
+                producer.close(duration);
+            } finally {
+                if (jsonProducer != null) {
+                    jsonProducer.close(duration);
+                }
+            }
         } catch (Exception e) {
             throw new DatabusClientRuntimeException("close cannot be performed :" + e.getMessage(), e, Producer.class);
         }
