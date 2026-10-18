@@ -351,7 +351,7 @@ public final class DatabusPushConsumer<P> extends DatabusConsumer<P> implements 
             }
         } catch (DatabusClientRuntimeException e) {
             // Prevents to logging  if a WakeupException was thrown because of calling close
-            if ((e.getCause() instanceof WakeupException)  && stopRequested.get()) {
+            if (!((e.getCause() instanceof WakeupException) && stopRequested.get())) {
                 LOG.error("Consumer " + super.getClientId() + "Error: " + e.getMessage(), e);
             }
         } catch (Exception e) {
@@ -434,8 +434,11 @@ public final class DatabusPushConsumer<P> extends DatabusConsumer<P> implements 
             }
             executor.shutdown();
             executor.awaitTermination(5, TimeUnit.MILLISECONDS);
+            if (pushAsyncExecutor != null) {
+                countDownLatch.await(5, TimeUnit.SECONDS);
+            }
         } catch (InterruptedException e) {
-
+            Thread.currentThread().interrupt();
         } finally {
             executor.shutdownNow();
             if (pushAsyncExecutor != null) {

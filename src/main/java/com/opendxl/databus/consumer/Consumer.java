@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -71,7 +72,7 @@ public abstract class Consumer<P> {
     /**
      * The topic partition list.
      */
-    private List<TopicPartition> topicPartitions;
+    private List<TopicPartition> topicPartitions = Collections.emptyList();
 
     /**
      * The header filter to filter records.
@@ -326,11 +327,12 @@ public abstract class Consumer<P> {
     public void assign(final List<TopicPartition> partitions) {
         try {
 
-            List<org.apache.kafka.common.TopicPartition> topicPartitions = new ArrayList();
+            List<org.apache.kafka.common.TopicPartition> kafkaTopicPartitions = new ArrayList();
             partitions.forEach(e -> {
-                topicPartitions.add(new org.apache.kafka.common.TopicPartition(e.topic(), e.partition()));
+                kafkaTopicPartitions.add(new org.apache.kafka.common.TopicPartition(e.topic(), e.partition()));
             });
-            consumer.assign(topicPartitions);
+            consumer.assign(kafkaTopicPartitions);
+            this.topicPartitions = new ArrayList<>(partitions);
         } catch (Exception e) {
             final String msg = "A assign cannot be performed: " + e.getMessage();
             LOG.error(msg, e);
@@ -794,6 +796,9 @@ public abstract class Consumer<P> {
 
             final org.apache.kafka.clients.consumer.OffsetAndMetadata committed =
                     consumer.committed(topicPartition);
+            if (committed == null) {
+                return null;
+            }
 
             return new OffsetAndMetadata(committed.offset(), committed.metadata());
         } catch (Exception e) {
@@ -1348,9 +1353,12 @@ public abstract class Consumer<P> {
                     entry : topicPartitionOffsetAndTimestampMap.entrySet()) {
 
                 TopicPartition topicPartition = new TopicPartition(entry.getKey().topic(), entry.getKey().partition());
-                OffsetAndTimestamp offsetAndTimestamp =
-                        new OffsetAndTimestamp(entry.getValue().offset(), entry.getValue().timestamp(),
-                                entry.getValue().leaderEpoch());
+                OffsetAndTimestamp offsetAndTimestamp = null;
+                if (entry.getValue() != null) {
+                    offsetAndTimestamp =
+                            new OffsetAndTimestamp(entry.getValue().offset(), entry.getValue().timestamp(),
+                                    entry.getValue().leaderEpoch());
+                }
 
                 result.put(topicPartition, offsetAndTimestamp);
             }
