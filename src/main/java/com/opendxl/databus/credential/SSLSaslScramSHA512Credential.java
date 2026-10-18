@@ -60,7 +60,7 @@ public final class SSLSaslScramSHA512Credential implements Credential {
                                         final String userPassword) {
 
         final String saslJaasConfig = "org.apache.kafka.common.security.scram.ScramLoginModule required "
-                + "username=\"" + userName + "\""
+                + "username=\"" + userName + "\" "
                 + "password=\"" + userPassword + "\";";
 
         config = new HashMap<>();
