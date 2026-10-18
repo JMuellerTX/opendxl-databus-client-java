@@ -160,7 +160,7 @@ public class ProducerMetricBuilder {
          * @return A map object of tags.
          */
         private Map<String, String> build() {
-            return tags;
+            return new HashMap<>(tags);
         }
     }
 }

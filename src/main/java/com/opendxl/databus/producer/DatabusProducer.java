@@ -153,9 +153,23 @@ public class DatabusProducer<P> extends Producer<P> {
             setFieldMembers(messageSerializer);
             this.setConfiguration(overrideConfig(configs));
             this.configureCredential(getConfiguration(), credential);
-            setProducer(new KafkaProducer(this.getConfiguration(), getKeySerializer(), getValueSerializer()));
-            setJSONProducer(new KafkaProducer(this.getConfiguration(), getKeySerializer(), getJSONValueSerializer()));
-            setClientId((String) configs.get(ProducerConfig.CLIENT_ID_CONFIG));
+            final String resolvedClientId = (String) this.getConfiguration().get(ProducerConfig.CLIENT_ID_CONFIG);
+            final Map<String, Object> jsonConfiguration = new HashMap<>(this.getConfiguration());
+            jsonConfiguration.put(ProducerConfig.CLIENT_ID_CONFIG, resolvedClientId + "-json");
+            final KafkaProducer byteArrayProducer =
+                    new KafkaProducer(this.getConfiguration(), getKeySerializer(), getValueSerializer());
+            setProducer(byteArrayProducer);
+            try {
+                setJSONProducer(new KafkaProducer(jsonConfiguration, getKeySerializer(), getJSONValueSerializer()));
+            } catch (Exception e) {
+                try {
+                    byteArrayProducer.close();
+                } catch (Exception closeException) {
+                    e.addSuppressed(closeException);
+                }
+                throw e;
+            }
+            super.setClientId(resolvedClientId);
         } catch (DatabusClientRuntimeException e) {
             throw e;
         } catch (Exception e) {
@@ -219,9 +233,23 @@ public class DatabusProducer<P> extends Producer<P> {
             Properties fixedProperties = overrideConfig(properties);
             this.setConfiguration((Map) fixedProperties);
             this.configureCredential(getConfiguration(), credential);
-            setProducer(new KafkaProducer(this.getConfiguration(), getKeySerializer(), getValueSerializer()));
-            setJSONProducer(new KafkaProducer(this.getConfiguration(), getKeySerializer(), getJSONValueSerializer()));
-            setClientId((String) fixedProperties.get(ProducerConfig.CLIENT_ID_CONFIG));
+            final String resolvedClientId = (String) this.getConfiguration().get(ProducerConfig.CLIENT_ID_CONFIG);
+            final Map<String, Object> jsonConfiguration = new HashMap<>(this.getConfiguration());
+            jsonConfiguration.put(ProducerConfig.CLIENT_ID_CONFIG, resolvedClientId + "-json");
+            final KafkaProducer byteArrayProducer =
+                    new KafkaProducer(this.getConfiguration(), getKeySerializer(), getValueSerializer());
+            setProducer(byteArrayProducer);
+            try {
+                setJSONProducer(new KafkaProducer(jsonConfiguration, getKeySerializer(), getJSONValueSerializer()));
+            } catch (Exception e) {
+                try {
+                    byteArrayProducer.close();
+                } catch (Exception closeException) {
+                    e.addSuppressed(closeException);
+                }
+                throw e;
+            }
+            super.setClientId(resolvedClientId);
         } catch (DatabusClientRuntimeException e) {
             throw e;
         } catch (Exception e) {

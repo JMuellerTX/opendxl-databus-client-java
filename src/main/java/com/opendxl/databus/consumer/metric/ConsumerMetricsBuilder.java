@@ -221,7 +221,7 @@ public class ConsumerMetricsBuilder {
          * @return A map object of tags.
          */
         public Map<String, String> build() {
-            return tags;
+            return new HashMap<>(tags);
         }
     }
 

@@ -169,7 +169,7 @@ public class DatabusConsumer<P> extends Consumer<P> {
         setValueDeserializer(new MessageDeserializer());
         setIntermediateValueDeserializer(new ByteArrayDeserializer());
         setConsumerRecordsAdapter(new ConsumerRecordsAdapter<P>(messageDeserializer, getValueDeserializer()));
-        setClientId((String) configuration.get(ConsumerConfiguration.CLIENT_ID_CONFIG));
+        super.setClientId((String) configuration.get(ConsumerConfiguration.CLIENT_ID_CONFIG));
     }
 
     /**
